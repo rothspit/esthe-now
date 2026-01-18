@@ -1,54 +1,72 @@
-import React, { useState } from 'react';
-import { MapPin, Menu, Search, Heart, Star, Clock, Sparkles, Navigation, TrendingUp, UserPlus, X, ExternalLink } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { MapPin, Menu, Search, Heart, Star, Clock, Sparkles, Navigation, TrendingUp, UserPlus, X, ExternalLink, Tag } from 'lucide-react';
 import { useShops } from './hooks/useShops';
+
+// Twitterアバター画像URLを生成
+const getAvatarUrl = (twitterId) => {
+  if (!twitterId) return 'https://placehold.co/400x400?text=No+Image';
+  const cleanId = twitterId.replace('@', '');
+  return `https://unavatar.io/twitter/${cleanId}`;
+};
 
 // 店舗カードコンポーネント
 const ShopCard = ({ shop, onClick }) => {
   const [liked, setLiked] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
-  // SEOタグ（PostgreSQL配列型）
   const tags = shop.seo_tags || [];
+  const avatarUrl = imgError ? 'https://placehold.co/400x400?text=No+Image' : getAvatarUrl(shop.twitter_id);
 
   return (
     <div
-      className="relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group"
+      className="relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
       onClick={() => onClick(shop)}
     >
-      <div className="p-4">
-        {/* ヘッダー */}
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="font-bold text-lg text-gray-800 leading-tight">
-            {shop.shop_name}
-          </h3>
-          <button
-            className="p-2 rounded-full bg-gray-100 hover:bg-rose-100 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              setLiked(!liked);
-            }}
-          >
-            <Heart className={`w-4 h-4 ${liked ? 'fill-rose-500 text-rose-500' : 'text-gray-400'}`} />
-          </button>
-        </div>
+      {/* 画像 */}
+      <div className="relative aspect-square overflow-hidden bg-gray-100">
+        <img
+          src={avatarUrl}
+          alt={shop.shop_name}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          onError={() => setImgError(true)}
+        />
+        {/* お気に入りボタン */}
+        <button
+          className="absolute top-2 right-2 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors shadow-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setLiked(!liked);
+          }}
+        >
+          <Heart className={`w-4 h-4 ${liked ? 'fill-rose-500 text-rose-500' : 'text-gray-400'}`} />
+        </button>
+      </div>
+
+      {/* コンテンツ */}
+      <div className="p-3">
+        {/* 店名 */}
+        <h3 className="font-bold text-sm text-gray-800 leading-tight mb-1 line-clamp-1">
+          {shop.shop_name}
+        </h3>
 
         {/* エリア */}
-        <div className="flex items-center text-sm text-gray-500 mb-2">
-          <MapPin className="w-4 h-4 mr-1 text-rose-400" />
+        <div className="flex items-center text-xs text-gray-500 mb-2">
+          <MapPin className="w-3 h-3 mr-0.5 text-rose-400" />
           {shop.area_name}
         </div>
 
         {/* コンセプト */}
         {shop.main_concept && (
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+          <p className="text-xs text-gray-600 mb-2 line-clamp-2">
             {shop.main_concept}
           </p>
         )}
 
         {/* タグ */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {tags.slice(0, 4).map((tag, i) => (
-              <span key={i} className="text-xs bg-rose-50 text-rose-500 rounded-full px-2 py-0.5">
+          <div className="flex flex-wrap gap-1 mb-2">
+            {tags.slice(0, 3).map((tag, i) => (
+              <span key={i} className="text-[10px] bg-rose-50 text-rose-500 rounded-full px-1.5 py-0.5">
                 #{tag}
               </span>
             ))}
@@ -56,17 +74,16 @@ const ShopCard = ({ shop, onClick }) => {
         )}
 
         {/* リンクボタン */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {shop.twitter_id && (
             <a
-              href={`https://x.com/${shop.twitter_id}`}
+              href={`https://x.com/${shop.twitter_id.replace('@', '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center text-sm text-gray-500 hover:text-rose-500 transition-colors"
+              className="inline-flex items-center text-[10px] text-gray-500 hover:text-gray-800 bg-gray-100 px-2 py-1 rounded-md transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
-              <ExternalLink className="w-4 h-4 mr-1" />
-              @{shop.twitter_id}
+              <span>X</span>
             </a>
           )}
           {shop.website_url && (
@@ -74,11 +91,11 @@ const ShopCard = ({ shop, onClick }) => {
               href={shop.website_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 bg-rose-500 text-white text-xs px-2 py-1 rounded-lg hover:bg-rose-600 transition-colors"
+              className="inline-flex items-center gap-0.5 bg-rose-500 text-white text-[10px] px-2 py-1 rounded-md hover:bg-rose-600 transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
-              <span>公式サイト</span>
-              <ExternalLink className="w-3 h-3" />
+              <span>公式</span>
+              <ExternalLink className="w-2.5 h-2.5" />
             </a>
           )}
         </div>
@@ -87,8 +104,38 @@ const ShopCard = ({ shop, onClick }) => {
   );
 };
 
+// タグフィルターコンポーネント
+const TagFilter = ({ tags, selectedTag, onTagChange }) => (
+  <div className="px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide">
+    <button
+      onClick={() => onTagChange(null)}
+      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1 ${
+        selectedTag === null
+          ? 'bg-purple-500 text-white shadow-md'
+          : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+      }`}
+    >
+      <Tag className="w-3 h-3" />
+      すべて
+    </button>
+    {tags.map((tag) => (
+      <button
+        key={tag}
+        onClick={() => onTagChange(tag)}
+        className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+          selectedTag === tag
+            ? 'bg-purple-500 text-white shadow-md'
+            : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+        }`}
+      >
+        #{tag}
+      </button>
+    ))}
+  </div>
+);
+
 // ヘッダーコンポーネント
-const Header = ({ onMenuClick, areas, selectedArea, onAreaChange }) => (
+const Header = ({ onMenuClick, areas, selectedArea, onAreaChange, allTags, selectedTag, onTagChange }) => (
   <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
     <div className="flex items-center justify-between px-4 py-3">
       {/* ロゴ */}
@@ -118,7 +165,7 @@ const Header = ({ onMenuClick, areas, selectedArea, onAreaChange }) => (
     </div>
 
     {/* エリアフィルター */}
-    <div className="px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide">
+    <div className="px-4 pb-2 flex gap-2 overflow-x-auto scrollbar-hide">
       <button
         onClick={() => onAreaChange('all')}
         className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
@@ -143,6 +190,11 @@ const Header = ({ onMenuClick, areas, selectedArea, onAreaChange }) => (
         </button>
       ))}
     </div>
+
+    {/* タグフィルター */}
+    {allTags.length > 0 && (
+      <TagFilter tags={allTags} selectedTag={selectedTag} onTagChange={onTagChange} />
+    )}
   </header>
 );
 
@@ -150,36 +202,36 @@ const Header = ({ onMenuClick, areas, selectedArea, onAreaChange }) => (
 const Footer = ({ activeTab, setActiveTab }) => (
   <footer className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-gray-100 pb-safe">
     <div className="flex items-center justify-around px-4 py-2">
-      <button 
+      <button
         className={`flex flex-col items-center p-2 rounded-xl transition-colors ${activeTab === 'nearby' ? 'text-rose-500' : 'text-gray-400'}`}
         onClick={() => setActiveTab('nearby')}
       >
         <Navigation className="w-5 h-5" />
         <span className="text-xs mt-1">現在地</span>
       </button>
-      
-      <button 
+
+      <button
         className={`flex flex-col items-center p-2 rounded-xl transition-colors ${activeTab === 'ranking' ? 'text-rose-500' : 'text-gray-400'}`}
         onClick={() => setActiveTab('ranking')}
       >
         <TrendingUp className="w-5 h-5" />
         <span className="text-xs mt-1">ランキング</span>
       </button>
-      
+
       {/* FAB */}
       <button className="relative -top-4 flex items-center justify-center w-14 h-14 bg-gradient-to-r from-rose-500 to-pink-500 rounded-full shadow-lg shadow-rose-300/50 hover:shadow-xl hover:shadow-rose-400/50 transition-all hover:scale-105">
         <Search className="w-6 h-6 text-white" />
       </button>
-      
-      <button 
+
+      <button
         className={`flex flex-col items-center p-2 rounded-xl transition-colors ${activeTab === 'new' ? 'text-rose-500' : 'text-gray-400'}`}
         onClick={() => setActiveTab('new')}
       >
         <UserPlus className="w-5 h-5" />
         <span className="text-xs mt-1">新着</span>
       </button>
-      
-      <button 
+
+      <button
         className={`flex flex-col items-center p-2 rounded-xl transition-colors ${activeTab === 'favorite' ? 'text-rose-500' : 'text-gray-400'}`}
         onClick={() => setActiveTab('favorite')}
       >
@@ -194,11 +246,11 @@ const Footer = ({ activeTab, setActiveTab }) => (
 const SideMenu = ({ isOpen, onClose }) => (
   <>
     {/* オーバーレイ */}
-    <div 
+    <div
       className={`fixed inset-0 bg-black/50 z-50 transition-opacity ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onClick={onClose}
     />
-    
+
     {/* メニュー */}
     <div className={`fixed top-0 right-0 bottom-0 w-72 bg-white z-50 transform transition-transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -207,7 +259,7 @@ const SideMenu = ({ isOpen, onClose }) => (
           <X className="w-5 h-5" />
         </button>
       </div>
-      
+
       <nav className="p-4">
         {[
           { icon: Search, label: 'セラピスト検索' },
@@ -217,7 +269,7 @@ const SideMenu = ({ isOpen, onClose }) => (
           { icon: Heart, label: 'お気に入り' },
           { icon: Star, label: 'レビュー' },
         ].map((item, i) => (
-          <button 
+          <button
             key={i}
             className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
           >
@@ -226,7 +278,7 @@ const SideMenu = ({ isOpen, onClose }) => (
           </button>
         ))}
       </nav>
-      
+
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
         <button className="w-full py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold rounded-xl shadow-md">
           店舗様ログイン
@@ -241,6 +293,7 @@ const ShopModal = ({ shop, onClose }) => {
   if (!shop) return null;
 
   const tags = shop.seo_tags || [];
+  const avatarUrl = getAvatarUrl(shop.twitter_id);
 
   return (
     <>
@@ -254,13 +307,21 @@ const ShopModal = ({ shop, onClose }) => {
         </div>
 
         <div className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold">{shop.shop_name}</h2>
-              <div className="flex items-center text-gray-500 mt-1">
-                <MapPin className="w-4 h-4 mr-1" />
-                {shop.area_name}エリア
-              </div>
+          {/* 画像 */}
+          <div className="w-32 h-32 mx-auto mb-4 rounded-2xl overflow-hidden shadow-lg">
+            <img
+              src={avatarUrl}
+              alt={shop.shop_name}
+              className="w-full h-full object-cover"
+              onError={(e) => { e.target.src = 'https://placehold.co/400x400?text=No+Image'; }}
+            />
+          </div>
+
+          <div className="text-center mb-4">
+            <h2 className="text-2xl font-bold">{shop.shop_name}</h2>
+            <div className="flex items-center justify-center text-gray-500 mt-1">
+              <MapPin className="w-4 h-4 mr-1" />
+              {shop.area_name}エリア
             </div>
           </div>
 
@@ -271,7 +332,7 @@ const ShopModal = ({ shop, onClose }) => {
           )}
 
           {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-6 justify-center">
               {tags.map((tag, i) => (
                 <span key={i} className="px-3 py-1.5 bg-rose-50 text-rose-500 rounded-full text-sm font-medium">
                   #{tag}
@@ -295,7 +356,7 @@ const ShopModal = ({ shop, onClose }) => {
             )}
             {shop.twitter_id && (
               <a
-                href={`https://x.com/${shop.twitter_id}`}
+                href={`https://x.com/${shop.twitter_id.replace('@', '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-4 bg-gray-800 text-white font-bold rounded-2xl text-lg flex items-center justify-center gap-2"
@@ -317,8 +378,31 @@ export default function EstheNow() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedShop, setSelectedShop] = useState(null);
   const [selectedArea, setSelectedArea] = useState('all');
+  const [selectedTag, setSelectedTag] = useState(null);
 
   const { shops, areas, loading, error } = useShops(selectedArea);
+
+  // 全店舗からユニークなタグを抽出
+  const allTags = useMemo(() => {
+    const tagSet = new Set();
+    shops.forEach(shop => {
+      if (shop.seo_tags) {
+        shop.seo_tags.forEach(tag => tagSet.add(tag));
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [shops]);
+
+  // タグでフィルタリングされた店舗
+  const filteredShops = useMemo(() => {
+    if (!selectedTag) return shops;
+    return shops.filter(shop =>
+      shop.seo_tags && shop.seo_tags.includes(selectedTag)
+    );
+  }, [shops, selectedTag]);
+
+  // タグフィルターの高さに応じてヘッダーのパディングを調整
+  const headerPadding = allTags.length > 0 ? 'pt-36' : 'pt-28';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -326,18 +410,24 @@ export default function EstheNow() {
         onMenuClick={() => setMenuOpen(true)}
         areas={areas}
         selectedArea={selectedArea}
-        onAreaChange={setSelectedArea}
+        onAreaChange={(area) => {
+          setSelectedArea(area);
+          setSelectedTag(null); // エリア変更時にタグフィルターをリセット
+        }}
+        allTags={allTags}
+        selectedTag={selectedTag}
+        onTagChange={setSelectedTag}
       />
 
       {/* メインコンテンツ */}
-      <main className="pt-28 pb-24 px-3">
+      <main className={`${headerPadding} pb-24 px-3`}>
         {/* セクションヘッダー */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-800 flex items-center">
             <Sparkles className="w-5 h-5 text-rose-500 mr-1" />
             店舗一覧
           </h2>
-          <span className="text-xs text-gray-500">{shops.length}件</span>
+          <span className="text-xs text-gray-500">{filteredShops.length}件</span>
         </div>
 
         {/* ローディング */}
@@ -354,10 +444,10 @@ export default function EstheNow() {
           </div>
         )}
 
-        {/* グリッドレイアウト */}
+        {/* グリッドレイアウト（2列、タブレット以上で3-4列） */}
         {!loading && !error && (
-          <div className="grid grid-cols-1 gap-3">
-            {shops.map((shop, index) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {filteredShops.map((shop, index) => (
               <ShopCard
                 key={shop.twitter_id || index}
                 shop={shop}
@@ -368,7 +458,7 @@ export default function EstheNow() {
         )}
 
         {/* 結果なし */}
-        {!loading && !error && shops.length === 0 && (
+        {!loading && !error && filteredShops.length === 0 && (
           <div className="text-center py-12 text-gray-500">
             店舗が見つかりませんでした
           </div>
@@ -378,7 +468,7 @@ export default function EstheNow() {
       <Footer activeTab={activeTab} setActiveTab={setActiveTab} />
       <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
       <ShopModal shop={selectedShop} onClose={() => setSelectedShop(null)} />
-      
+
       <style jsx global>{`
         @keyframes slide-up {
           from { transform: translateY(100%); }
