@@ -137,7 +137,7 @@ const TagFilter = ({ tags, selectedTag, onTagChange }) => (
 );
 
 // ヘッダーコンポーネント
-const Header = ({ onMenuClick, areas, selectedArea, onAreaChange, allTags, selectedTag, onTagChange }) => (
+const Header = ({ onMenuClick, areas, areasWithData, selectedArea, onAreaChange, allTags, selectedTag, onTagChange }) => (
   <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10" style={{ background: 'rgba(10, 10, 10, 0.9)', backdropFilter: 'blur(20px)' }}>
     <div className="flex items-center justify-between px-4 py-3">
       {/* ロゴ */}
@@ -179,7 +179,7 @@ const Header = ({ onMenuClick, areas, selectedArea, onAreaChange, allTags, selec
         すべて
       </button>
       {areas.map((area) => {
-        const hasData = ['akihabara', 'ikebukuro', 'gotanda', 'shinjuku', 'ueno', 'shinbashi', 'shibuya'].includes(area.slug);
+        const hasData = areasWithData.has(area.slug);
         return (
           <button
             key={area.slug}
@@ -309,7 +309,7 @@ function TopPage() {
   const [selectedArea, setSelectedArea] = useState('all');
   const [selectedTag, setSelectedTag] = useState(null);
 
-  const { shops, areas, loading, error } = useShops(selectedArea);
+  const { shops, areas, areasWithData, loading, error } = useShops(selectedArea);
 
   // 全店舗からユニークなタグを抽出
   const allTags = useMemo(() => {
@@ -350,6 +350,7 @@ function TopPage() {
       <Header
         onMenuClick={() => setMenuOpen(true)}
         areas={areas}
+        areasWithData={areasWithData}
         selectedArea={selectedArea}
         onAreaChange={(area) => {
           setSelectedArea(area);

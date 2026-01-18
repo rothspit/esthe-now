@@ -4,8 +4,29 @@ import { supabase } from '../lib/supabase';
 export function useShops(areaSlug = null) {
   const [shops, setShops] = useState([]);
   const [areas, setAreas] = useState([]);
+  const [areasWithData, setAreasWithData] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // 全店舗からデータがあるエリアを取得
+  useEffect(() => {
+    async function fetchAreasWithData() {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('v_shops_with_area')
+          .select('area_slug');
+
+        if (fetchError) throw fetchError;
+
+        const slugs = new Set(data?.map(s => s.area_slug).filter(Boolean) || []);
+        setAreasWithData(slugs);
+      } catch (err) {
+        console.error('Error fetching areas with data:', err);
+      }
+    }
+
+    fetchAreasWithData();
+  }, []);
 
   useEffect(() => {
     async function fetchShops() {
@@ -55,5 +76,5 @@ export function useShops(areaSlug = null) {
     fetchAreas();
   }, []);
 
-  return { shops, areas, loading, error };
+  return { shops, areas, areasWithData, loading, error };
 }
