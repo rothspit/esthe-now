@@ -33,6 +33,9 @@ export function useShops(areaSlug = null) {
       try {
         setLoading(true);
 
+        // v_shops_with_area ビューは既に is_active = true でフィルタリング済み
+        // 万が一ビューが変更された場合に備えて、直接テーブルから取得する場合は
+        // .eq('is_active', true) を追加すること
         let query = supabase
           .from('v_shops_with_area')
           .select('*');
@@ -60,10 +63,12 @@ export function useShops(areaSlug = null) {
   useEffect(() => {
     async function fetchAreas() {
       try {
+        // アクティブなエリアのみ取得
         const { data, error: fetchError } = await supabase
           .from('areas')
           .select('*')
-          .order('name');
+          .eq('is_active', true)
+          .order('sort_order');
 
         if (fetchError) throw fetchError;
 
