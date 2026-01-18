@@ -1,11 +1,11 @@
 /**
- * 動的サイトマップ生成スクリプト
- * 
- * ビルド時にSupabaseから店舗データを取得し、sitemap.xmlを生成
- * 
+ * サイトマップ自動生成スクリプト
+ *
+ * Supabaseから店舗データを取得し、public/sitemap.xml を生成
+ *
  * 使用方法:
  *   node scripts/generate-sitemap.js
- * 
+ *
  * 環境変数:
  *   VITE_SUPABASE_URL - Supabase プロジェクトURL
  *   VITE_SUPABASE_ANON_KEY - Supabase Anon Key
@@ -19,7 +19,7 @@ import { fileURLToPath } from 'url';
 // 設定
 const CONFIG = {
   BASE_URL: 'https://esthe-now.jp',
-  OUTPUT_DIR: 'dist',        // Viteのビルド出力先
+  OUTPUT_DIR: 'public',      // Viteのpublicディレクトリ
   OUTPUT_FILE: 'sitemap.xml',
 };
 
@@ -39,10 +39,11 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
- * 現在の日付をW3C Datetime形式で取得
+ * 日付をW3C Datetime形式 (YYYY-MM-DD) に変換
  */
-function getW3CDate() {
-  return new Date().toISOString().split('T')[0];
+function formatDate(dateString) {
+  if (!dateString) return new Date().toISOString().split('T')[0];
+  return new Date(dateString).toISOString().split('T')[0];
 }
 
 /**
@@ -61,8 +62,8 @@ function escapeXml(str) {
 /**
  * サイトマップXMLを生成
  */
-function generateSitemapXml(shops, areas) {
-  const today = getW3CDate();
+function generateSitemapXml(shops) {
+  const today = formatDate();
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -75,29 +76,16 @@ function generateSitemapXml(shops, areas) {
   </url>
 `;
 
-  // エリアページ（将来的に実装予定の場合）
-  // areas.forEach(area => {
-  //   xml += `
-  // <url>
-  //   <loc>${CONFIG.BASE_URL}/area/${escapeXml(area.slug)}</loc>
-  //   <lastmod>${today}</lastmod>
-  //   <changefreq>weekly</changefreq>
-  //   <priority>0.8</priority>
-  // </url>`;
-  // });
-
   // 店舗詳細ページ
   shops.forEach(shop => {
-    const lastmod = shop.updated_at 
-      ? new Date(shop.updated_at).toISOString().split('T')[0]
-      : today;
+    const lastmod = formatDate(shop.updated_at || shop.created_at);
 
     xml += `
   <url>
     <loc>${CONFIG.BASE_URL}/shops/${escapeXml(shop.id)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>`;
   });
 
@@ -118,7 +106,7 @@ Allow: /
 # Sitemap
 Sitemap: ${CONFIG.BASE_URL}/sitemap.xml
 
-# Crawl-delay (optional)
+# Crawl-delay
 Crawl-delay: 1
 `;
 }
@@ -129,13 +117,15 @@ Crawl-delay: 1
 async function main() {
   console.log('🗺️  サイトマップ生成を開始します...');
   console.log(`📍 BASE_URL: ${CONFIG.BASE_URL}`);
+  console.log(`📁 出力先: ${CONFIG.OUTPUT_DIR}/`);
   console.log('');
 
-  // 店舗データを取得
+  // 店舗データを取得（is_active = true のみ）
   console.log('📋 店舗データを取得中...');
   const { data: shops, error: shopsError } = await supabase
-    .from('v_shops_with_area')
-    .select('id, updated_at, area_slug')
+    .from('shops')
+    .select('id, updated_at, created_at')
+    .eq('is_active', true)
     .order('created_at', { ascending: false });
 
   if (shopsError) {
@@ -143,23 +133,10 @@ async function main() {
     process.exit(1);
   }
 
-  // エリアデータを取得
-  console.log('📋 エリアデータを取得中...');
-  const { data: areas, error: areasError } = await supabase
-    .from('areas')
-    .select('slug, name')
-    .eq('is_active', true)
-    .order('sort_order');
-
-  if (areasError) {
-    console.error('❌ エリアデータの取得に失敗:', areasError.message);
-    process.exit(1);
-  }
-
-  console.log(`✅ 店舗: ${shops.length}件, エリア: ${areas.length}件`);
+  console.log(`✅ ${shops.length}件の店舗を取得しました`);
   console.log('');
 
-  // 出力ディレクトリを作成
+  // 出力ディレクトリを確認・作成
   const outputDir = resolve(__dirname, '..', CONFIG.OUTPUT_DIR);
   if (!existsSync(outputDir)) {
     mkdirSync(outputDir, { recursive: true });
@@ -167,30 +144,31 @@ async function main() {
   }
 
   // sitemap.xml を生成
-  const sitemapXml = generateSitemapXml(shops, areas);
+  const sitemapXml = generateSitemapXml(shops);
   const sitemapPath = resolve(outputDir, CONFIG.OUTPUT_FILE);
   writeFileSync(sitemapPath, sitemapXml, 'utf-8');
-  console.log(`✅ sitemap.xml を生成: ${sitemapPath}`);
+  console.log(`✅ sitemap.xml を生成しました`);
 
   // robots.txt を生成
   const robotsTxt = generateRobotsTxt();
   const robotsPath = resolve(outputDir, 'robots.txt');
   writeFileSync(robotsPath, robotsTxt, 'utf-8');
-  console.log(`✅ robots.txt を生成: ${robotsPath}`);
+  console.log(`✅ robots.txt を生成しました`);
 
   // 統計情報
   console.log('');
   console.log('='.repeat(50));
   console.log('📊 生成結果');
   console.log('='.repeat(50));
-  console.log(`📄 URL数: ${shops.length + 1} (トップ + 店舗${shops.length}件)`);
-  console.log(`📁 出力先: ${outputDir}`);
+  console.log(`📄 URL数: ${shops.length + 1}件`);
+  console.log(`   - トップページ: 1件`);
+  console.log(`   - 店舗ページ: ${shops.length}件`);
   console.log('');
-  console.log('✨ サイトマップ生成完了!');
+  console.log('✨ 完了!');
 }
 
 // 実行
 main().catch((error) => {
-  console.error('❌ 予期せぬエラー:', error);
+  console.error('❌ エラー:', error);
   process.exit(1);
 });
