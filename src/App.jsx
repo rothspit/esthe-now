@@ -184,7 +184,7 @@ const Header = ({ onMenuClick, areas, selectedArea, onAreaChange, allTags, selec
         すべて
       </button>
       {areas.map((area) => {
-        const hasData = ['akihabara', 'ikebukuro', 'gotanda'].includes(area.slug); // データがあるエリア
+        const hasData = ['akihabara', 'ikebukuro', 'gotanda', 'shinjuku'].includes(area.slug); // データがあるエリア
         return (
           <button
             key={area.slug}
