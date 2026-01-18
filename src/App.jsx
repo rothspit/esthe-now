@@ -179,7 +179,7 @@ const Header = ({ onMenuClick, areas, selectedArea, onAreaChange, allTags, selec
         すべて
       </button>
       {areas.map((area) => {
-        const hasData = ['akihabara', 'ikebukuro', 'gotanda', 'shinjuku'].includes(area.slug);
+        const hasData = ['akihabara', 'ikebukuro', 'gotanda', 'shinjuku', 'ueno'].includes(area.slug);
         return (
           <button
             key={area.slug}
