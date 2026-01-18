@@ -1,0 +1,61 @@
+name: Link Checker
+
+on:
+  # 毎日 日本時間 朝4時 (UTC 19:00) に実行
+  schedule:
+    - cron: '0 19 * * *'
+  
+  # 手動実行も可能
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'ドライラン（DBを更新しない）'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  check-links:
+    name: Check Shop URLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run link checker
+        id: check
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/check-links.js
+
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## 🔗 Link Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Valid links: ${{ steps.check.outputs.valid_count || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ❌ Broken links: ${{ steps.check.outputs.broken_count || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏰ Executed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+
+      # リンク切れが多い場合に通知（オプション）
+      - name: Notify on many broken links
+        if: steps.check.outputs.broken_count > 10
+        run: |
+          echo "⚠️ Warning: ${{ steps.check.outputs.broken_count }} broken links detected!"
+          # ここにSlack通知やEmail通知を追加可能
