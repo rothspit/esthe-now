@@ -55,19 +55,33 @@ const ShopCard = ({ shop, onClick }) => {
           </div>
         )}
 
-        {/* Xリンク */}
-        {shop.twitter_id && (
-          <a
-            href={`https://x.com/${shop.twitter_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center text-sm text-gray-500 hover:text-rose-500 transition-colors"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink className="w-4 h-4 mr-1" />
-            @{shop.twitter_id}
-          </a>
-        )}
+        {/* リンクボタン */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {shop.twitter_id && (
+            <a
+              href={`https://x.com/${shop.twitter_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-sm text-gray-500 hover:text-rose-500 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="w-4 h-4 mr-1" />
+              @{shop.twitter_id}
+            </a>
+          )}
+          {shop.website_url && (
+            <a
+              href={shop.website_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 bg-rose-500 text-white text-xs px-2 py-1 rounded-lg hover:bg-rose-600 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span>公式サイト</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -266,17 +280,31 @@ const ShopModal = ({ shop, onClose }) => {
             </div>
           )}
 
-          {shop.twitter_id && (
-            <a
-              href={`https://x.com/${shop.twitter_id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold rounded-2xl shadow-lg shadow-rose-300/50 text-lg flex items-center justify-center gap-2"
-            >
-              <ExternalLink className="w-5 h-5" />
-              Xで詳細を見る
-            </a>
-          )}
+          {/* リンクボタン */}
+          <div className="flex flex-col gap-3">
+            {shop.website_url && (
+              <a
+                href={shop.website_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold rounded-2xl shadow-lg shadow-rose-300/50 text-lg flex items-center justify-center gap-2"
+              >
+                <ExternalLink className="w-5 h-5" />
+                公式サイトを見る
+              </a>
+            )}
+            {shop.twitter_id && (
+              <a
+                href={`https://x.com/${shop.twitter_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-4 bg-gray-800 text-white font-bold rounded-2xl text-lg flex items-center justify-center gap-2"
+              >
+                <ExternalLink className="w-5 h-5" />
+                Xで詳細を見る
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </>
