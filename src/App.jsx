@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { MapPin, Menu, Search, Heart, Star, Clock, Sparkles, Navigation, TrendingUp, UserPlus, X, ExternalLink, Tag, Crown } from 'lucide-react';
+import { MapPin, Menu, Search, Heart, Star, Clock, Navigation, TrendingUp, UserPlus, X, ExternalLink, Tag, Crown } from 'lucide-react';
 import { useShops } from './hooks/useShops';
+import ShopDetail from './pages/ShopDetail';
 
 // Twitterアバター画像URLを生成
 const getAvatarUrl = (twitterId) => {
@@ -11,7 +13,7 @@ const getAvatarUrl = (twitterId) => {
 };
 
 // 店舗カードコンポーネント
-const ShopCard = ({ shop, onClick }) => {
+const ShopCard = ({ shop }) => {
   const [liked, setLiked] = useState(false);
   const [imgError, setImgError] = useState(false);
 
@@ -19,13 +21,13 @@ const ShopCard = ({ shop, onClick }) => {
   const avatarUrl = imgError ? 'https://placehold.co/400x400/1a1a1a/666666?text=No+Image' : getAvatarUrl(shop.twitter_id);
 
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(212,175,55,0.3)] border border-white/10"
+    <Link
+      to={`/shops/${shop.id}`}
+      className="relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(212,175,55,0.3)] border border-white/10 block"
       style={{
         background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(10px)',
       }}
-      onClick={() => onClick(shop)}
     >
       {/* 画像 */}
       <div className="relative aspect-square overflow-hidden bg-neutral-900">
@@ -41,6 +43,7 @@ const ShopCard = ({ shop, onClick }) => {
         <button
           className="absolute top-2 right-2 p-2 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 transition-colors border border-white/20"
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             setLiked(!liked);
           }}
@@ -83,31 +86,23 @@ const ShopCard = ({ shop, onClick }) => {
         {/* リンクボタン */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {shop.twitter_id && (
-            <a
-              href={`https://x.com/${shop.twitter_id.replace('@', '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-[10px] text-neutral-400 hover:text-white bg-white/10 px-2 py-1 rounded-md transition-colors border border-white/10"
-              onClick={(e) => e.stopPropagation()}
+            <span
+              className="inline-flex items-center text-[10px] text-neutral-400 bg-white/10 px-2 py-1 rounded-md border border-white/10"
             >
-              <span>X</span>
-            </a>
+              X
+            </span>
           )}
           {shop.website_url && (
-            <a
-              href={shop.website_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-0.5 text-[10px] px-2 py-1 rounded-md transition-all bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-medium hover:from-amber-400 hover:to-yellow-400"
-              onClick={(e) => e.stopPropagation()}
+            <span
+              className="inline-flex items-center gap-0.5 text-[10px] px-2 py-1 rounded-md bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-medium"
             >
-              <span>公式</span>
+              公式
               <ExternalLink className="w-2.5 h-2.5" />
-            </a>
+            </span>
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
@@ -146,12 +141,12 @@ const Header = ({ onMenuClick, areas, selectedArea, onAreaChange, allTags, selec
   <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10" style={{ background: 'rgba(10, 10, 10, 0.9)', backdropFilter: 'blur(20px)' }}>
     <div className="flex items-center justify-between px-4 py-3">
       {/* ロゴ */}
-      <div className="flex items-center">
+      <Link to="/" className="flex items-center">
         <Crown className="w-6 h-6 text-amber-400 mr-1" />
         <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
           esthe-now
         </span>
-      </div>
+      </Link>
 
       {/* 右側アイコン */}
       <div className="flex items-center gap-2">
@@ -184,7 +179,7 @@ const Header = ({ onMenuClick, areas, selectedArea, onAreaChange, allTags, selec
         すべて
       </button>
       {areas.map((area) => {
-        const hasData = ['akihabara', 'ikebukuro', 'gotanda', 'shinjuku'].includes(area.slug); // データがあるエリア
+        const hasData = ['akihabara', 'ikebukuro', 'gotanda', 'shinjuku'].includes(area.slug);
         return (
           <button
             key={area.slug}
@@ -307,98 +302,10 @@ const SideMenu = ({ isOpen, onClose }) => (
   </>
 );
 
-// モーダル（店舗詳細）
-const ShopModal = ({ shop, onClose }) => {
-  if (!shop) return null;
-
-  const tags = shop.seo_tags || [];
-  const avatarUrl = getAvatarUrl(shop.twitter_id);
-
-  return (
-    <>
-      <div className="fixed inset-0 bg-black/80 z-50" onClick={onClose} />
-      <div
-        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl max-h-[85vh] overflow-y-auto animate-slide-up border-t border-white/10"
-        style={{ background: 'rgba(18, 18, 18, 0.98)', backdropFilter: 'blur(20px)' }}
-      >
-        <div className="sticky top-0 p-4 border-b border-white/10 flex items-center justify-between" style={{ background: 'rgba(18, 18, 18, 0.95)' }}>
-          <span className="font-bold text-lg text-white">{shop.shop_name}</span>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
-            <X className="w-5 h-5 text-neutral-400" />
-          </button>
-        </div>
-
-        <div className="p-4">
-          {/* 画像 */}
-          <div className="w-32 h-32 mx-auto mb-4 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(212,175,55,0.3)] border border-amber-500/30">
-            <img
-              src={avatarUrl}
-              alt={shop.shop_name}
-              className="w-full h-full object-cover"
-              onError={(e) => { e.target.src = 'https://placehold.co/400x400/1a1a1a/666666?text=No+Image'; }}
-            />
-          </div>
-
-          <div className="text-center mb-4">
-            <h2 className="text-2xl font-bold text-white">{shop.shop_name}</h2>
-            <div className="flex items-center justify-center text-amber-400 mt-1">
-              <MapPin className="w-4 h-4 mr-1" />
-              {shop.area_name}エリア
-            </div>
-          </div>
-
-          {shop.main_concept && (
-            <div className="mb-4 p-4 rounded-xl border border-white/10" style={{ background: 'rgba(255,255,255,0.05)' }}>
-              <p className="text-neutral-300">{shop.main_concept}</p>
-            </div>
-          )}
-
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6 justify-center">
-              {tags.map((tag, i) => (
-                <span key={i} className="px-3 py-1.5 bg-pink-500/20 text-pink-400 rounded-full text-sm font-medium border border-pink-500/30">
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* リンクボタン */}
-          <div className="flex flex-col gap-3">
-            {shop.website_url && (
-              <a
-                href={shop.website_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-2xl shadow-[0_0_30px_rgba(212,175,55,0.5)] text-lg flex items-center justify-center gap-2 hover:from-amber-400 hover:to-yellow-400 transition-all"
-              >
-                <ExternalLink className="w-5 h-5" />
-                公式サイトを見る
-              </a>
-            )}
-            {shop.twitter_id && (
-              <a
-                href={`https://x.com/${shop.twitter_id.replace('@', '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-4 bg-white/10 text-white font-bold rounded-2xl text-lg flex items-center justify-center gap-2 border border-white/20 hover:bg-white/20 transition-all"
-              >
-                <ExternalLink className="w-5 h-5" />
-                Xで詳細を見る
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
-// メインアプリ
-export default function EstheNow() {
+// トップページコンポーネント
+function TopPage() {
   const [activeTab, setActiveTab] = useState('nearby');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedShop, setSelectedShop] = useState(null);
   const [selectedArea, setSelectedArea] = useState('all');
   const [selectedTag, setSelectedTag] = useState(null);
 
@@ -483,9 +390,8 @@ export default function EstheNow() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {filteredShops.map((shop, index) => (
               <ShopCard
-                key={shop.twitter_id || index}
+                key={shop.id || shop.twitter_id || index}
                 shop={shop}
-                onClick={setSelectedShop}
               />
             ))}
           </div>
@@ -501,7 +407,6 @@ export default function EstheNow() {
 
       <Footer activeTab={activeTab} setActiveTab={setActiveTab} />
       <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
-      <ShopModal shop={selectedShop} onClose={() => setSelectedShop(null)} />
 
       <style jsx global>{`
         @keyframes slide-up {
@@ -519,5 +424,15 @@ export default function EstheNow() {
         }
       `}</style>
     </div>
+  );
+}
+
+// メインアプリ（ルーティング）
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<TopPage />} />
+      <Route path="/shops/:id" element={<ShopDetail />} />
+    </Routes>
   );
 }
