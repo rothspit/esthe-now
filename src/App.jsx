@@ -6,8 +6,8 @@ import { useShops } from './hooks/useShops';
 const ShopCard = ({ shop, onClick }) => {
   const [liked, setLiked] = useState(false);
 
-  // SEOタグを配列に変換
-  const tags = shop.seo_tags ? shop.seo_tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+  // SEOタグ（PostgreSQL配列型）
+  const tags = shop.seo_tags || [];
 
   return (
     <div
@@ -226,7 +226,7 @@ const SideMenu = ({ isOpen, onClose }) => (
 const ShopModal = ({ shop, onClose }) => {
   if (!shop) return null;
 
-  const tags = shop.seo_tags ? shop.seo_tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+  const tags = shop.seo_tags || [];
 
   return (
     <>
