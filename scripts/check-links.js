@@ -199,27 +199,35 @@ async function main() {
 
   // リンク切れの店舗を非表示に
   if (brokenLinks.length > 0) {
-    console.log('🔧 リンク切れ店舗を非表示に更新中...');
-    console.log('');
-
-    const brokenIds = brokenLinks.map(shop => shop.id);
-    
-    const { error: updateError } = await supabase
-      .from('shops')
-      .update({ is_active: false, updated_at: new Date().toISOString() })
-      .in('id', brokenIds);
-
-    if (updateError) {
-      console.error('❌ 更新に失敗:', updateError.message);
-      process.exit(1);
-    }
-
-    console.log('📝 非表示にした店舗一覧:');
+    console.log('⚠️ 削除機能は現在OFFです');
+    console.log('📝 リンク切れ店舗一覧（更新はスキップ）:');
     for (const shop of brokenLinks) {
       console.log(`   - ${shop.name} (${shop.error})`);
       console.log(`     URL: ${shop.website_url}`);
     }
     console.log('');
+
+    // ========================================
+    // 削除処理は現在コメントアウト中
+    // ========================================
+    // const brokenIds = brokenLinks.map(shop => shop.id);
+    //
+    // const { error: updateError } = await supabase
+    //   .from('shops')
+    //   .update({ is_active: false, updated_at: new Date().toISOString() })
+    //   .in('id', brokenIds);
+    //
+    // if (updateError) {
+    //   console.error('❌ 更新に失敗:', updateError.message);
+    //   process.exit(1);
+    // }
+    //
+    // console.log('📝 非表示にした店舗一覧:');
+    // for (const shop of brokenLinks) {
+    //   console.log(`   - ${shop.name} (${shop.error})`);
+    //   console.log(`     URL: ${shop.website_url}`);
+    // }
+    // console.log('');
   }
 
   // サマリー出力（GitHub Actions用）
