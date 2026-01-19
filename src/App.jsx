@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { MapPin, Menu, Search, Heart, Star, Clock, Navigation, TrendingUp, UserPlus, X, ExternalLink, Tag, Crown } from 'lucide-react';
 import { useShops } from './hooks/useShops';
 import ShopDetail from './pages/ShopDetail';
+import ViewToggle from './components/ViewToggle';
 
 // Twitterアバター画像URLを生成
 const getAvatarUrl = (twitterId) => {
@@ -386,23 +387,24 @@ function TopPage() {
           </div>
         )}
 
-        {/* グリッドレイアウト */}
+        {/* リスト/地図表示切り替え */}
         {!loading && !error && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {filteredShops.map((shop, index) => (
-              <ShopCard
-                key={shop.id || shop.twitter_id || index}
-                shop={shop}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* 結果なし */}
-        {!loading && !error && filteredShops.length === 0 && (
-          <div className="text-center py-12 text-neutral-500">
-            店舗が見つかりませんでした
-          </div>
+          <ViewToggle shops={filteredShops}>
+            {filteredShops.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {filteredShops.map((shop, index) => (
+                  <ShopCard
+                    key={shop.id || shop.twitter_id || index}
+                    shop={shop}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-neutral-500">
+                店舗が見つかりませんでした
+              </div>
+            )}
+          </ViewToggle>
         )}
       </main>
 
