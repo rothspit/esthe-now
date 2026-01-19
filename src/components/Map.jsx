@@ -26,9 +26,15 @@ const goldIcon = new L.Icon({
 });
 
 export default function Map({ shops, center = [35.6762, 139.6503], zoom = 12 }) {
+  // 有効な位置情報を持つ店舗のみフィルタリング（安全対策）
+  const validShops = shops.filter(
+    (shop) => shop.lat != null && shop.lng != null &&
+              !isNaN(shop.lat) && !isNaN(shop.lng)
+  );
+
   // 店舗がある場合、最初の店舗を中心に
-  const mapCenter = shops.length > 0
-    ? [shops[0].lat, shops[0].lng]
+  const mapCenter = validShops.length > 0
+    ? [validShops[0].lat, validShops[0].lng]
     : center;
 
   return (
@@ -46,7 +52,7 @@ export default function Map({ shops, center = [35.6762, 139.6503], zoom = 12 }) 
       />
 
       {/* 店舗マーカー */}
-      {shops.map((shop) => (
+      {validShops.map((shop) => (
         <Marker
           key={shop.id}
           position={[shop.lat, shop.lng]}

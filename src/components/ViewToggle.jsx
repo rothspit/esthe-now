@@ -8,9 +8,10 @@ const Map = lazy(() => import('./Map'));
 export default function ViewToggle({ shops, children }) {
   const [viewMode, setViewMode] = useState('list');
 
-  // 位置情報がある店舗のみ抽出
+  // 位置情報がある店舗のみ抽出（null/undefined/NaN をすべて除外）
   const shopsWithLocation = shops.filter(
-    (shop) => shop.lat !== null && shop.lng !== null
+    (shop) => shop.lat != null && shop.lng != null &&
+              !isNaN(shop.lat) && !isNaN(shop.lng)
   );
 
   return (
